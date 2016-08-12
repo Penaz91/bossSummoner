@@ -1,0 +1,18 @@
+#List of Boss to roll
+Bosses:
+  - SkeletalKnight
+  - SkeletonKing
+#Summoning interval in minutes
+SummonInterval: 240
+#Next summoning (for reboot purposes - do not edit)
+NextSummon: 60
+#Next Boss (for reboot purposes - do not edit)
+NextBoss: SkeletalKnight
+#World where the boss will be summoned
+World: MainWorld
+#Coordinates where the boss will be summoned
+x: 0
+y: 0
+z: 0
+#How many minutes between the boss automatic broadcasts
+AutoBroadcastTime: 20

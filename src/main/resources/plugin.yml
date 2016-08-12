@@ -1,0 +1,12 @@
+name: BossSummoner
+main: BossSummoner.bossSummoner.main
+version: 0.0.1_SNAPSHOT
+author: Penaz
+database: false
+
+commands:
+    boss:
+        description: Returns the next boss summon time
+        usage: /boss
+        permission: bossSummoner.boss
+        permission-message: You need the bossSummoner.boss permission to use this command
