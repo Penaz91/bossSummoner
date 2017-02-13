@@ -2,13 +2,17 @@ package BossSummoner.bossSummoner;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Random;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class main extends JavaPlugin{
@@ -21,7 +25,9 @@ public class main extends JavaPlugin{
 	long timeOfSummoning=0;
 	int x;
 	int y;
+	static boolean enabled = false;
 	int z;
+	static long r=0;
 	int summoningTask=0;
 	int broadcastTask=0;
 	Random rnd=new Random();
@@ -38,59 +44,68 @@ public class main extends JavaPlugin{
 			settings=(HashMap<String, Object>) getConfig().getValues(true);
 			NextSummon=Long.parseLong(settings.get("NextSummon").toString());
 		}
+		r = Long.parseLong(settings.get("radius").toString());
 		SummonInterval=Long.parseLong(settings.get("SummonInterval").toString())*60;
 		BossList=(ArrayList<String>) settings.get("Bosses");
 		NextBoss=settings.get("NextBoss").toString();
 		World=settings.get("World").toString();
-		x=Integer.parseInt(settings.get("x").toString());
-		y=Integer.parseInt(settings.get("y").toString());
-		z=Integer.parseInt(settings.get("z").toString());
-		getLogger().info(BossList.toString());
-		getLogger().info("BossSummoner Loaded Successfully");
-		timeOfSummoning=System.currentTimeMillis()+NextSummon*1000;
-		summoningTask=Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable(){
-			public void run(){
-				RecurringSummon();
+		if (Bukkit.getServer().getWorld(World)==null){
+			Bukkit.getServer().getLogger().warning("The world " + World + " wasn't found, this plugin will disable itself");
+			Bukkit.getServer().getPluginManager().disablePlugin(this);
+		}else{
+			enabled = true;
+			x=Integer.parseInt(settings.get("x").toString());
+			y=Integer.parseInt(settings.get("y").toString());
+			z=Integer.parseInt(settings.get("z").toString());
+			getLogger().info(BossList.toString());
+			getLogger().info("BossSummoner Loaded Successfully");
+			timeOfSummoning=System.currentTimeMillis()+NextSummon*1000;
+			summoningTask=Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable(){
+				public void run(){
+					RecurringSummon();
+				}
 			}
+					, NextSummon*20);
+			broadcastTask=Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable(){
+				public void run(){
+					getServer().broadcastMessage(ChatColor.DARK_RED+"["+ChatColor.GOLD+"Boss"+ChatColor.DARK_RED+"] "+ChatColor.BLUE+NextBoss+" will be summoned in " + getRemainingTimeString());
+				}
+			}, 1200, 2400*Integer.parseInt(settings.get("AutoBroadcastTime").toString()));
 		}
-				, NextSummon*20);
-		broadcastTask=Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable(){
-			public void run(){
-				getServer().broadcastMessage(ChatColor.DARK_RED+"["+ChatColor.GOLD+"Boss"+ChatColor.DARK_RED+"] "+ChatColor.BLUE+NextBoss+" will be summoned in " + getRemainingTimeString());
-			}
-		}, 1200, 2400*Integer.parseInt(settings.get("AutoBroadcastTime").toString()));
 	}
 	@Override 
 	public void onDisable() {
-		getServer().getScheduler().cancelTask(broadcastTask);
-		getServer().getScheduler().cancelTask(summoningTask);
-		NextSummon=getRemainingMillis()/1000;
-		this.getConfig().options().header(
-				"--------------------------------------\r\n"
-				+ "bossSummoner Configuration File\r\n"
-				+ "--------------------------------------\r\n"
-				+ "Bosses: a list of the bosses to roll through\r\n"
-				+ "SummonInterval: Interval between boss summons (minutes)\r\n"
-				+ "NextSummon: When to summon the next boss (seconds) (DON'T EDIT)\r\n"
-				+ "NextBoss: Which boss to summon Next (name) (DON'T EDIT)\r\n"
-				+ "World: Which world to spawn the boss in\r\n"
-				+ "x,y,z: coordinates where to spawn the boss\r\n"
-				+ "AutoBroadcastTime: Time between [Boss] Broadcasts\r\n"
-				+ "---------------------------------------------------\r\n"
-				+ "The first broadcast always happens 10 minutes after the reboot"
-				);
-		this.getConfig().options().copyHeader(true);
-		this.getConfig().set("Bosses", settings.get("Bosses"));
-		this.getConfig().set("SummonInterval", (int) SummonInterval/60);
-		this.getConfig().set("NextSummon", NextSummon);
-		this.getConfig().set("NextBoss", NextBoss);
-		this.getConfig().set("World",World);
-		this.getConfig().set("x",x);
-		this.getConfig().set("y",y);
-		this.getConfig().set("z",z);
-		this.getConfig().set("AutoBroadcastTime",settings.get("AutoBroadcastTime"));
-		this.saveConfig();
-		getLogger().info("BossSummoner Unloaded Successfully");
+		if (enabled){
+			getServer().getScheduler().cancelTask(broadcastTask);
+			getServer().getScheduler().cancelTask(summoningTask);
+			NextSummon=getRemainingMillis()/1000;
+			this.getConfig().options().header(
+					"--------------------------------------\r\n"
+					+ "bossSummoner Configuration File\r\n"
+					+ "--------------------------------------\r\n"
+					+ "Bosses: a list of the bosses to roll through\r\n"
+					+ "SummonInterval: Interval between boss summons (minutes)\r\n"
+					+ "NextSummon: When to summon the next boss (seconds) (DON'T EDIT)\r\n"
+					+ "NextBoss: Which boss to summon Next (name) (DON'T EDIT)\r\n"
+					+ "World: Which world to spawn the boss in\r\n"
+					+ "x,y,z: coordinates where to spawn the boss\r\n"
+					+ "AutoBroadcastTime: Time between [Boss] Broadcasts\r\n"
+					+ "---------------------------------------------------\r\n"
+					+ "The first broadcast always happens 10 minutes after the reboot"
+					);
+			this.getConfig().options().copyHeader(true);
+			this.getConfig().set("Bosses", settings.get("Bosses"));
+			this.getConfig().set("SummonInterval", (int) SummonInterval/60);
+			this.getConfig().set("NextSummon", NextSummon);
+			this.getConfig().set("NextBoss", NextBoss);
+			this.getConfig().set("World",World);
+			this.getConfig().set("x",x);
+			this.getConfig().set("y",y);
+			this.getConfig().set("z",z);
+			this.getConfig().set("AutoBroadcastTime",settings.get("AutoBroadcastTime"));
+			this.saveConfig();
+			getLogger().info("BossSummoner Unloaded Successfully");
+		}
 	}
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args){
@@ -103,8 +118,21 @@ public class main extends JavaPlugin{
 	public void RecurringSummon(){
 		summoningTask=Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable(){
 			public void run(){
+				Location loc = new Location(Bukkit.getWorld(World), x, y, z);
+				Collection<Entity> ent= Bukkit.getWorld(World).getNearbyEntities(loc, r, r, r);
+				ArrayList<Player> pl = new ArrayList<Player>();
+				for (Entity e: ent){
+					if (e instanceof Player){
+						pl.add((Player) e);
+					}
+				}
+				if (pl.size() != 0){
+					getServer().dispatchCommand(getServer().getConsoleSender(), "mm mobs spawn "+NextBoss+" 1 "+World+","+x+","+y+","+z);
+					getServer().broadcastMessage(ChatColor.DARK_RED+"["+ChatColor.GOLD+"Boss"+ChatColor.DARK_RED+"] " + ChatColor.BLUE + NextBoss+ " has been summoned");
+				}else{
+					getServer().broadcastMessage(ChatColor.DARK_RED+"["+ChatColor.GOLD+"Boss"+ChatColor.DARK_RED+"] " + ChatColor.BLUE + "Nobody was near the boss area for the boss, the boss was not summoned");
+				}
 				timeOfSummoning=System.currentTimeMillis()+SummonInterval*1000;
-				getServer().dispatchCommand(getServer().getConsoleSender(), "mm mobs spawn "+NextBoss+" 1 "+World+","+x+","+y+","+z);
 				NextBoss=BossList.get(rnd.nextInt(BossList.size())).toString();
 			}
 		},0,SummonInterval*20);

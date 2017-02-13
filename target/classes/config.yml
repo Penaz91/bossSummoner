@@ -8,6 +8,8 @@ SummonInterval: 240
 NextSummon: 60
 #Next Boss (for reboot purposes - do not edit)
 NextBoss: SkeletalKnight
+#Radius to verify players for
+radius: 25
 #World where the boss will be summoned
 World: MainWorld
 #Coordinates where the boss will be summoned
