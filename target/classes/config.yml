@@ -18,3 +18,4 @@ y: 0
 z: 0
 #How many minutes between the boss automatic broadcasts
 AutoBroadcastTime: 20
+WarningTime: 5
