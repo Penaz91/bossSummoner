@@ -31,6 +31,7 @@ public class main extends JavaPlugin{
 	static boolean enabled = false;
 	int z;
 	static long r=0;
+	static int bossSummonResolution = 20;
 	BukkitTask summoningTask=null;
 	BukkitTask broadcastTask=null;
 	BukkitTask st = null;
@@ -60,6 +61,7 @@ public class main extends JavaPlugin{
 			x=Integer.parseInt(settings.get("x").toString());
 			y=Integer.parseInt(settings.get("y").toString());
 			z=Integer.parseInt(settings.get("z").toString());
+			bossSummonResolution = Integer.parseInt(settings.get("bossSummonResolution").toString());
 			getLogger().info(BossList.toString());
 			getLogger().info("BossSummoner Loaded Successfully");
 			warningtime = Integer.parseInt(settings.get("WarningTime").toString());
@@ -68,16 +70,17 @@ public class main extends JavaPlugin{
 				public void run(){
 						RecurringSummon();
 				}
-			}, 20);
+			}, bossSummonResolution);
 			broadcastTask=Bukkit.getServer().getScheduler().runTaskTimerAsynchronously(this, new Runnable(){
 				public void run(){
-					getServer().broadcastMessage(ChatColor.DARK_RED+"["+ChatColor.GOLD+"Boss"+ChatColor.DARK_RED+"] "+ChatColor.BLUE+NextBoss+" will be summoned in " + getRemainingTimeString());
+					getServer().broadcastMessage(ChatColor.DARK_RED+"["+ChatColor.GOLD+"Boss"+ChatColor.DARK_RED+"] "+ChatColor.BLUE + NextBoss + " will be summoned in " + getRemainingTimeString());
 				}
 			}, 1200, 2400*Integer.parseInt(settings.get("AutoBroadcastTime").toString()));
 		}
 	}
 	@Override 
 	public void onDisable() {
+		getLogger().info("Unloading BossSummoner");
 		if (enabled){
 			if (st!=null){
 				st.cancel();
@@ -97,6 +100,7 @@ public class main extends JavaPlugin{
 					+ "x,y,z: coordinates where to spawn the boss\r\n"
 					+ "AutoBroadcastTime: Time between [Boss] Broadcasts (Minutes)\r\n"
 					+ "WarningTime: How many minutes before the spawn shall there be an extra [Boss] broadcast?\r\n"
+					+ "bossSummonResolution: How many ticks should pass between each summon time check? \r\n"
 					+ "---------------------------------------------------\r\n"
 					);
 			this.getConfig().options().copyHeader(true);
@@ -110,6 +114,7 @@ public class main extends JavaPlugin{
 			this.getConfig().set("z",z);
 			this.getConfig().set("AutoBroadcastTime",settings.get("AutoBroadcastTime"));
 			this.getConfig().set("WarningTime", settings.get("WarningTime"));
+			this.getConfig().set("bossSummonResolution", settings.get("bossSummonResolution"));
 			this.saveConfig();
 			getLogger().info("BossSummoner Unloaded Successfully");
 		}
@@ -150,7 +155,7 @@ public class main extends JavaPlugin{
 					warned=false;
 				}
 			}
-		},0,20);
+		},0,bossSummonResolution);
 	}
 	public String getRemainingTimeString(){
 		/*long mil = getRemainingMillis();

@@ -19,3 +19,5 @@ z: 0
 #How many minutes between the boss automatic broadcasts
 AutoBroadcastTime: 20
 WarningTime: 5
+#How often (in ticks) we should check for the time remaining until a summon
+bossSummonResolution: 20
